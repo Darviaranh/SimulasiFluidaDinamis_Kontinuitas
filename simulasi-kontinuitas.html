@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Simulasi Persamaan Kontinuitas — Efek Ibu Jari pada Selang</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --hud-bg:#0B1420;
+    --hud-bg-2:#0F1D2E;
+    --hud-grid:#16283C;
+    --hud-text:#CFE3F0;
+    --hud-text-dim:#5D7A93;
+    --water:#4FB6E8;
+    --amber:#E8A33D;
+    color-scheme: dark;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0; height:100%;}
+  body{
+    font-family:'IBM Plex Mono', ui-monospace, monospace;
+    background:
+      radial-gradient(1200px 600px at 20% -10%, var(--hud-bg-2), var(--hud-bg) 60%);
+    color:var(--hud-text);
+    -webkit-font-smoothing:antialiased;
+    min-height:100%;
+    padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px);
+  }
+  .hud{
+    position:relative;
+    padding:28px 22px 40px;
+  }
+  .hud::before{
+    content:"";
+    position:fixed; inset:0;
+    background-image:
+      linear-gradient(var(--hud-grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--hud-grid) 1px, transparent 1px);
+    background-size:28px 28px;
+    opacity:0.35;
+    pointer-events:none;
+  }
+  .hud-inner{ position:relative; z-index:1; max-width:760px; margin:0 auto; }
+
+  .hud-eyebrow{
+    font-size:11px; letter-spacing:0.14em; color:var(--hud-text-dim);
+    display:flex; justify-content:space-between; margin-bottom:6px;
+  }
+  .hud-title{
+    font-family:'Lora', serif; font-weight:700; font-style:italic;
+    color:#EAF4FB; font-size:28px; line-height:1.25; margin:0 0 4px;
+  }
+  .hud-sub{ font-size:13px; color:var(--hud-text-dim); margin:0 0 22px; line-height:1.65; max-width:60ch; }
+
+  .stage{
+    position:relative;
+    width:100%;
+    aspect-ratio:16/10;
+    max-height:60vh;
+    background:#08121C;
+    border:1px solid #1E3550;
+    border-radius:4px;
+    overflow:hidden;
+    box-shadow: inset 0 0 40px rgba(0,0,0,0.55);
+  }
+  .stage video{
+    position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
+    filter:saturate(0.7) brightness(0.6);
+    display:none;
+  }
+  .stage canvas{ position:absolute; inset:0; width:100%; height:100%; }
+  .stage-badge{
+    position:absolute; top:10px; left:10px; z-index:3;
+    font-size:10px; letter-spacing:0.08em; padding:4px 8px;
+    background:rgba(8,18,28,0.75); border:1px solid #1E3550; border-radius:2px;
+    color:var(--hud-text-dim); display:flex; align-items:center; gap:6px;
+  }
+  .stage-badge .dot{ width:6px;height:6px;border-radius:50%; background:#D9704F; }
+  .stage-badge.live .dot{ background:var(--water); box-shadow:0 0 6px var(--water); }
+
+  .cam-btn{
+    position:absolute; bottom:10px; right:10px; z-index:3;
+    font-family:inherit; font-size:10.5px; letter-spacing:0.05em;
+    background:rgba(8,18,28,0.8); color:var(--hud-text);
+    border:1px solid #2A4867; border-radius:2px; padding:7px 10px;
+    cursor:pointer;
+  }
+  .cam-btn:hover{ border-color:var(--water); color:#fff; }
+  .cam-btn:focus-visible{ outline:2px solid var(--water); outline-offset:2px; }
+
+  .controls{ margin-top:22px; }
+  .ctrl-row{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px; }
+  .ctrl-label{ font-size:12px; color:var(--hud-text-dim); letter-spacing:0.03em; }
+  .ctrl-value{ font-size:16px; font-weight:600; color:var(--amber); }
+  input[type=range]{
+    width:100%; -webkit-appearance:none; appearance:none;
+    height:4px; border-radius:2px;
+    background:linear-gradient(90deg, var(--water) 0%, var(--water) var(--pct,0%), #1E3550 var(--pct,0%));
+    outline:none; margin:4px 0 24px;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none; width:20px; height:20px; border-radius:50%;
+    background:var(--amber); border:3px solid #0B1420; cursor:pointer;
+  }
+  input[type=range]::-moz-range-thumb{
+    width:20px; height:20px; border-radius:50%;
+    background:var(--amber); border:3px solid #0B1420; cursor:pointer;
+  }
+
+  .readout{
+    display:grid; grid-template-columns:repeat(4, 1fr); gap:1px;
+    background:#1E3550; border:1px solid #1E3550; border-radius:4px; overflow:hidden;
+  }
+  .readout div{ background:#0C1927; padding:14px 12px; }
+  .readout .k{ font-size:9.5px; color:var(--hud-text-dim); letter-spacing:0.06em; margin-bottom:5px; }
+  .readout .v{ font-size:17px; color:var(--hud-text); font-weight:600; }
+  .readout .v.hi{ color:var(--water); }
+  .readout .v.warn{ color:var(--amber); }
+
+  .eq-line{
+    margin-top:18px; font-size:12.5px; color:var(--hud-text-dim);
+    padding-top:16px; border-top:1px dashed #1E3550; line-height:1.7;
+  }
+  .eq-line b{ color:var(--hud-text); font-weight:600; }
+
+  @media (max-width:560px){
+    .readout{ grid-template-columns:1fr 1fr; }
+  }
+  @media (prefers-reduced-motion: reduce){ * { scroll-behavior:auto !important; } }
+</style>
+</head>
+<body>
+
+<div class="hud">
+  <div class="hud-inner">
+    <div class="hud-eyebrow"><span>PANEL INSTRUMEN — SIMULASI</span><span id="clock">00:00:00</span></div>
+    <h1 class="hud-title">Efek Ibu Jari pada Ujung Selang</h1>
+    <p class="hud-sub">Geser pengatur di bawah untuk menutup sebagian ujung selang dengan "ibu jari virtual", lalu amati bagaimana kecepatan air berubah sesuai persamaan kontinuitas A1·v1 = A2·v2.</p>
+
+    <div class="stage" id="stage">
+      <video id="bgVideo" autoplay playsinline muted></video>
+      <canvas id="simCanvas"></canvas>
+      <div class="stage-badge" id="camBadge"><span class="dot"></span><span id="camBadgeText">LATAR SIMULASI</span></div>
+      <button class="cam-btn" id="camBtn" type="button">Aktifkan kamera</button>
+    </div>
+
+    <div class="controls">
+      <div class="ctrl-row">
+        <span class="ctrl-label">PENUTUPAN UJUNG SELANG OLEH IBU JARI</span>
+        <span class="ctrl-value"><span id="pinchVal">0</span>%</span>
+      </div>
+      <input type="range" id="pinchSlider" min="0" max="90" value="0" step="1" aria-label="Tingkat penutupan ujung selang">
+
+      <div class="readout">
+        <div><div class="k">A1 — LUAS AWAL</div><div class="v" id="a1Val">3.14 cm²</div></div>
+        <div><div class="k">v1 — KEC. MASUK</div><div class="v" id="v1Val">2.0 m/s</div></div>
+        <div><div class="k">A2 — LUAS KELUAR</div><div class="v hi" id="a2Val">3.14 cm²</div></div>
+        <div><div class="k">v2 — KEC. KELUAR</div><div class="v warn" id="v2Val">2.0 m/s</div></div>
+      </div>
+
+      <div class="eq-line">
+        Persamaan kontinuitas: <b>A1 · v1 = A2 · v2</b> (debit Q dianggap tetap).
+        Saat A2 mengecil, v2 harus membesar agar debit tetap sama.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function tick(){
+    var d = new Date();
+    var s = [d.getHours(), d.getMinutes(), d.getSeconds()].map(function(n){return String(n).padStart(2,"0");}).join(":");
+    document.getElementById("clock").textContent = s;
+  }
+  tick(); setInterval(tick, 1000);
+
+  var A1 = Math.PI * 1 * 1;
+  var v1 = 2.0;
+  var Q = A1 * v1;
+
+  var slider = document.getElementById("pinchSlider");
+  document.getElementById("a1Val").textContent = A1.toFixed(2) + " cm²";
+  document.getElementById("v1Val").textContent = v1.toFixed(1) + " m/s";
+
+  var state = { pinch:0, A2:A1, v2:v1 };
+  function updatePhysics(){
+    var pinch = parseFloat(slider.value);
+    var A2 = A1 * (1 - pinch/100);
+    var v2 = Q / A2;
+    state.pinch = pinch; state.A2 = A2; state.v2 = v2;
+    document.getElementById("pinchVal").textContent = pinch.toFixed(0);
+    document.getElementById("a2Val").textContent = A2.toFixed(2) + " cm²";
+    document.getElementById("v2Val").textContent = v2.toFixed(2) + " m/s";
+    slider.style.setProperty("--pct", pinch + "%");
+  }
+  slider.addEventListener("input", updatePhysics);
+  updatePhysics();
+
+  var canvas = document.getElementById("simCanvas");
+  var ctx = canvas.getContext("2d");
+  var stage = document.getElementById("stage");
+  function resizeCanvas(){
+    var rect = stage.getBoundingClientRect();
+    canvas.width = rect.width * devicePixelRatio;
+    canvas.height = rect.height * devicePixelRatio;
+    ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+  }
+  window.addEventListener("resize", resizeCanvas);
+  resizeCanvas();
+
+  var particles = [];
+  function spawnParticle(w,h){
+    var hoseTop = h*0.38, hoseBot = h*0.62;
+    return { x:-10, y: hoseTop + Math.random()*(hoseBot-hoseTop), exited:false, seed: Math.random() };
+  }
+
+  function frame(){
+    var rect = stage.getBoundingClientRect();
+    var w = rect.width, h = rect.height;
+    ctx.clearRect(0,0,w,h);
+
+    var pinch = state.pinch/100;
+    var hoseTop = h*0.38, hoseBot = h*0.62;
+    var nozzleX = w*0.62;
+    var openTop = hoseTop + (hoseBot-hoseTop)*(pinch*0.5);
+    var openBot = hoseBot - (hoseBot-hoseTop)*(pinch*0.5);
+
+    ctx.fillStyle = "rgba(20,40,58,0.85)";
+    ctx.fillRect(0, hoseTop, nozzleX, hoseBot-hoseTop);
+    ctx.strokeStyle = "#2A4867"; ctx.lineWidth = 2;
+    ctx.strokeRect(0, hoseTop, nozzleX, hoseBot-hoseTop);
+
+    ctx.fillStyle = "rgba(20,40,58,0.95)";
+    ctx.fillRect(nozzleX, hoseTop, 14, openTop-hoseTop);
+    ctx.fillRect(nozzleX, openBot, 14, hoseBot-openBot);
+
+    if(pinch > 0.02){
+      ctx.fillStyle = "rgba(232,163,61,0.85)";
+      var thumbW = 26;
+      ctx.beginPath(); ctx.roundRect(nozzleX-6, hoseTop-2, thumbW, (openTop-hoseTop)+4, 6); ctx.fill();
+      ctx.beginPath(); ctx.roundRect(nozzleX-6, openBot-2, thumbW, (hoseBot-openBot)+4, 6); ctx.fill();
+    }
+
+    for(var s=0; s<3; s++){ if(Math.random() < 0.9) particles.push(spawnParticle(w,h)); }
+
+    var speedInside = 40 + v1*22;
+    var speedOutside = 40 + state.v2*22;
+
+    ctx.fillStyle = "#4FB6E8";
+    for(var i=particles.length-1;i>=0;i--){
+      var p = particles[i];
+      if(p.x < nozzleX){ p.x += speedInside*0.06; }
+      else {
+        if(!p.exited){ p.exited = true; p.y = openTop + (openBot-openTop)*p.seed; }
+        p.x += speedOutside*0.09;
+        p.y += (p.seed-0.5)*1.4 + (speedOutside*0.01);
+      }
+      var alpha = p.exited ? Math.max(0, 1-((p.x-nozzleX)/(w*0.5))) : 0.9;
+      ctx.globalAlpha = alpha;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.exited?2.6:2.2, 0, Math.PI*2); ctx.fill();
+      if(p.x > w+20 || alpha<=0) particles.splice(i,1);
+    }
+    ctx.globalAlpha = 1;
+    if(particles.length > 900) particles.splice(0, particles.length-900);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  var camBtn = document.getElementById("camBtn");
+  var video = document.getElementById("bgVideo");
+  var camBadge = document.getElementById("camBadge");
+  var camBadgeText = document.getElementById("camBadgeText");
+  camBtn.addEventListener("click", function(){
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+      camBadgeText.textContent = "KAMERA TIDAK DIDUKUNG"; return;
+    }
+    navigator.mediaDevices.getUserMedia({ video:{ facingMode:"environment" }, audio:false })
+      .then(function(stream){
+        video.srcObject = stream; video.style.display = "block";
+        camBadge.classList.add("live"); camBadgeText.textContent = "KAMERA AKTIF";
+        camBtn.style.display = "none";
+      })
+      .catch(function(){ camBadgeText.textContent = "KAMERA TIDAK TERSEDIA DI SINI"; });
+  });
+})();
+</script>
+</body>
+</html>

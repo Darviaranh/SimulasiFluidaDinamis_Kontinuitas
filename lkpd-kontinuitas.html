@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>LKPD — Persamaan Kontinuitas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1B2430;
+    --paper:#F7F3E8;
+    --paper-line:#D8CFB8;
+    --paper-line-strong:#B9AD8C;
+    --forest:#2F6F5E;
+    color-scheme: light;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Lora', serif;
+    -webkit-font-smoothing:antialiased;
+    padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px);
+  }
+  .paper{ padding:36px 22px 60px; }
+  .paper-inner{ max-width:760px; margin:0 auto; }
+
+  .paper-kicker{
+    font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:0.1em;
+    color:var(--forest); margin-bottom:10px;
+  }
+  h1{ font-size:28px; margin:0 0 6px; line-height:1.25; font-weight:700; }
+  .paper-sub{ font-size:15px; color:#5A5240; margin:0 0 26px; font-style:italic; }
+
+  .id-grid{
+    display:grid; grid-template-columns:1fr 1fr; gap:14px 18px;
+    margin-bottom:28px; padding-bottom:22px; border-bottom:1px solid var(--paper-line-strong);
+  }
+  .id-field label{ display:block; font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:#7A6F55; letter-spacing:0.05em; margin-bottom:4px; }
+  .id-field input{
+    width:100%; font-family:'Lora', serif; font-size:15px; color:var(--ink);
+    background:transparent; border:none; border-bottom:1px solid var(--paper-line-strong);
+    padding:5px 2px; outline:none;
+  }
+  .id-field input:focus{ border-bottom-color:var(--forest); }
+
+  section.block{ margin-bottom:32px; }
+  .block h2{
+    font-size:17px; margin:0 0 10px; font-weight:700; color:var(--ink);
+    display:flex; align-items:baseline; gap:10px;
+  }
+  .block h2 .tag{
+    font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--forest);
+    border:1px solid var(--forest); border-radius:2px; padding:1px 6px;
+  }
+  .block p{ font-size:15px; line-height:1.75; margin:0 0 10px; }
+
+  table.log{ width:100%; border-collapse:collapse; margin:14px 0 6px; font-size:14px; }
+  table.log th, table.log td{ border:1px solid var(--paper-line-strong); padding:9px 10px; text-align:left; }
+  table.log th{ font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:0.05em; background:#EFE9D8; color:#5A5240; font-weight:600;}
+  table.log td input{
+    width:100%; border:none; background:transparent; font-family:'IBM Plex Mono',monospace;
+    font-size:14px; color:var(--ink); outline:none; padding:3px;
+  }
+  table.log td input:focus{ background:#EFE9D8; }
+
+  textarea.ans{
+    width:100%; min-height:80px; resize:vertical;
+    font-family:'Lora', serif; font-size:15px; color:var(--ink);
+    background:#FBF8F0; border:1px solid var(--paper-line-strong); border-radius:3px;
+    padding:11px 13px; line-height:1.6; outline:none;
+  }
+  textarea.ans:focus{ border-color:var(--forest); }
+
+  .formula-box{
+    background:#EFE9D8; border-left:3px solid var(--forest);
+    padding:13px 16px; font-family:'IBM Plex Mono',monospace; font-size:14.5px;
+    margin:10px 0 14px; color:var(--ink);
+  }
+
+  .save-row{ display:flex; align-items:center; gap:12px; margin-top:8px; flex-wrap:wrap; }
+  .save-btn{
+    font-family:'IBM Plex Mono',monospace; font-size:13px; letter-spacing:0.04em;
+    background:var(--forest); color:#F7F3E8; border:none; border-radius:3px;
+    padding:12px 18px; cursor:pointer;
+  }
+  .save-btn:hover{ background:#265A4C; }
+  .save-btn:focus-visible{ outline:2px solid var(--ink); outline-offset:2px; }
+  .save-note{ font-family:'IBM Plex Mono',monospace; font-size:12px; color:#7A6F55; }
+
+  footer.paper-foot{
+    margin-top:38px; padding-top:16px; border-top:1px solid var(--paper-line);
+    font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:#9A9074;
+  }
+
+  @media print{
+    .save-row{ display:none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="paper">
+  <div class="paper-inner">
+    <div class="paper-kicker">LEMBAR KERJA PESERTA DIDIK · FLUIDA DINAMIS</div>
+    <h1>Persamaan Kontinuitas — Efek Ibu Jari pada Selang</h1>
+    <p class="paper-sub">Isi lembar ini sambil mengamati simulasi (dibuka di tab/perangkat terpisah).</p>
+
+    <div class="id-grid">
+      <div class="id-field"><label>NAMA</label><input type="text" id="fNama" placeholder="Tulis namamu"></div>
+      <div class="id-field"><label>KELAS</label><input type="text" id="fKelas" placeholder="Mis. XI IPA 2"></div>
+      <div class="id-field" style="grid-column:1/-1;"><label>KELOMPOK</label><input type="text" id="fKelompok" placeholder="Nama / nomor kelompok"></div>
+    </div>
+
+    <section class="block">
+      <h2><span class="tag">A</span>Tujuan</h2>
+      <p>Membuktikan hubungan antara luas penampang dan kecepatan aliran fluida (persamaan kontinuitas) melalui simulasi penutupan ujung selang oleh ibu jari.</p>
+    </section>
+
+    <section class="block">
+      <h2><span class="tag">B</span>Data Pengamatan</h2>
+      <p>Geser pengatur pada simulasi ke nilai berikut, lalu catat nilai <b>A2</b> dan <b>v2</b> yang muncul pada layar untuk setiap kondisi:</p>
+      <table class="log">
+        <thead><tr><th>Penutupan</th><th>A2 (cm²)</th><th>v2 (m/s)</th></tr></thead>
+        <tbody>
+          <tr><td>0 %</td><td><input type="text" data-row="0"></td><td><input type="text" data-row="0v"></td></tr>
+          <tr><td>30 %</td><td><input type="text" data-row="30"></td><td><input type="text" data-row="30v"></td></tr>
+          <tr><td>60 %</td><td><input type="text" data-row="60"></td><td><input type="text" data-row="60v"></td></tr>
+          <tr><td>90 %</td><td><input type="text" data-row="90"></td><td><input type="text" data-row="90v"></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="block">
+      <h2><span class="tag">C</span>Analisis</h2>
+      <div class="formula-box">A1 · v1 = A2 · v2</div>
+      <p>1) Berdasarkan data di atas, apa yang terjadi pada v2 ketika A2 semakin kecil?</p>
+      <textarea class="ans" id="q1"></textarea>
+    </section>
+
+    <section class="block">
+      <p>2) Hitung debit (Q = A · v) untuk kondisi 0% dan 90% menggunakan datamu. Apakah nilainya kira-kira tetap sama? Jelaskan mengapa debit seharusnya konstan.</p>
+      <textarea class="ans" id="q2"></textarea>
+    </section>
+
+    <section class="block">
+      <p>3) Sebutkan satu contoh lain penerapan persamaan kontinuitas dalam kehidupan sehari-hari, lalu jelaskan bagian mana yang berperan sebagai "penampang besar" dan "penampang kecil" pada contoh tersebut.</p>
+      <textarea class="ans" id="q3"></textarea>
+    </section>
+
+    <section class="block">
+      <h2><span class="tag">D</span>Kesimpulan</h2>
+      <p>Tuliskan kesimpulanmu tentang hubungan luas penampang dan kecepatan aliran fluida:</p>
+      <textarea class="ans" id="q4" style="min-height:90px;"></textarea>
+    </section>
+
+    <div class="save-row">
+      <button class="save-btn" id="saveBtn" type="button">Simpan jawaban</button>
+      <button class="save-btn" id="printBtn" type="button" style="background:#7A6F55;">Cetak lembar ini</button>
+      <span class="save-note" id="saveNote">Belum disimpan</span>
+    </div>
+
+    <footer class="paper-foot">Jawaban tersimpan otomatis di perangkat/browser ini saja (tidak dikirim ke server).</footer>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var fields = ["fNama","fKelas","fKelompok","q1","q2","q3","q4"];
+  var rowInputs = document.querySelectorAll("table.log input");
+  var saveBtn = document.getElementById("saveBtn");
+  var saveNote = document.getElementById("saveNote");
+  var printBtn = document.getElementById("printBtn");
+  var STORE_KEY = "lkpd_kontinuitas_v1";
+
+  function loadAnswers(){
+    try{
+      var raw = localStorage.getItem(STORE_KEY);
+      if(!raw) return;
+      var data = JSON.parse(raw);
+      fields.forEach(function(id){
+        var el = document.getElementById(id);
+        if(el && data[id] !== undefined) el.value = data[id];
+      });
+      if(data.rows){
+        rowInputs.forEach(function(inp){
+          var key = inp.getAttribute("data-row");
+          if(data.rows[key] !== undefined) inp.value = data.rows[key];
+        });
+      }
+      if(data.savedAt) saveNote.textContent = "Tersimpan terakhir: " + data.savedAt;
+    }catch(e){ /* storage unavailable — form still usable */ }
+  }
+
+  function saveAnswers(){
+    try{
+      var data = { rows:{} };
+      fields.forEach(function(id){
+        var el = document.getElementById(id);
+        if(el) data[id] = el.value;
+      });
+      rowInputs.forEach(function(inp){ data.rows[inp.getAttribute("data-row")] = inp.value; });
+      data.savedAt = new Date().toLocaleString("id-ID");
+      localStorage.setItem(STORE_KEY, JSON.stringify(data));
+      saveNote.textContent = "Tersimpan terakhir: " + data.savedAt;
+    }catch(e){
+      saveNote.textContent = "Gagal menyimpan (penyimpanan browser tidak tersedia)";
+    }
+  }
+
+  saveBtn.addEventListener("click", saveAnswers);
+  printBtn.addEventListener("click", function(){ window.print(); });
+  loadAnswers();
+})();
+</script>
+</body>
+</html>
